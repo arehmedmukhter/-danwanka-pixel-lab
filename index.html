@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>DANWANKA PIXEL LAB</title>
+<style>
+:root{--orange:#ff7900;--orange2:#ff9d24;--dark:#171717;--panel:#242424;--line:#393939;--muted:#aaa;--bg:#101010}
+*{box-sizing:border-box}body{margin:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);background:var(--bg);color:#fff;font:14px Arial,sans-serif;overflow:hidden}
+button,input,select{font:inherit}button{border:0;border-radius:8px;padding:10px 12px;background:#343434;color:#fff;cursor:pointer}button:active{transform:scale(.98)}button.primary{background:var(--orange);color:#111;font-weight:700}button:disabled{opacity:.4}
+.top{height:54px;background:#1c1c1c;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 12px;gap:8px}
+.brand{font-weight:800;letter-spacing:.4px}.brand b{color:var(--orange)}.top-actions{display:flex;gap:6px}.top-actions button{padding:8px 10px}
+.app{height:calc(100dvh - 54px);display:grid;grid-template-columns:68px 1fr 270px;min-height:0}
+.tools{background:#1d1d1d;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 5px;gap:7px;overflow:auto}
+.tool{width:56px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#ddd;background:transparent;border:1px solid transparent}
+.tool span:first-child{font-size:21px}.tool.active,.tool:hover{background:#352313;border-color:#9b4a00;color:#ff9b32}
+.workspace{display:flex;flex-direction:column;min-width:0;min-height:0;background:#111}
+.workspacebar{height:42px;display:flex;align-items:center;justify-content:center;gap:8px;border-bottom:1px solid var(--line);color:#bbb;font-size:12px}
+.stage-scroll{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:22px;background-color:#121212;background-image:linear-gradient(45deg,#1b1b1b 25%,transparent 25%),linear-gradient(-45deg,#1b1b1b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1b1b1b 75%),linear-gradient(-45deg,transparent 75%,#1b1b1b 75%);background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0}
+.canvas-wrap{position:relative;box-shadow:0 10px 40px #0009;flex:none;background:transparent}
+canvas{display:block;max-width:none;touch-action:none}
+.bottom{height:36px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#999;font-size:11px}
+.side{background:#1d1d1d;border-left:1px solid var(--line);overflow:auto;padding:12px}
+.panel-title{font-size:13px;font-weight:700;color:var(--orange);margin:3px 0 12px;text-transform:uppercase;letter-spacing:.7px}
+.section{border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:13px}
+.field{display:flex;flex-direction:column;gap:5px;margin:9px 0}.field label{font-size:11px;color:#aaa}
+input[type=text],input[type=number],select{width:100%;background:#303030;color:#fff;border:1px solid #484848;border-radius:7px;padding:9px;min-width:0}
+input[type=color]{width:100%;height:34px;border:0;background:transparent;padding:0}
+input[type=range]{width:100%;accent-color:var(--orange)}
+.row{display:flex;gap:7px}.row>*{flex:1;min-width:0}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.layer-list{display:flex;flex-direction:column;gap:5px}.layer{display:flex;align-items:center;gap:6px;padding:8px;background:#303030;border:1px solid #444;border-radius:7px;font-size:12px;cursor:pointer}.layer.selected{border-color:var(--orange);background:#3b2a1d}.layer .lname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hint{color:#888;font-size:11px;line-height:1.5}
+.hidden{display:none!important}
+@media(max-width:760px){
+ .top{height:52px}
+ .brand{font-size:12px}
+ .top-actions{gap:4px}
+ .top-actions button{font-size:10px;padding:7px 8px}
+ .stage-scroll{padding:10px}
+
+ .app{grid-template-columns:56px 1fr;height:calc(100dvh - 54px)}
+ .tools{padding:6px 2px;gap:4px}.tool{width:49px;min-height:49px;font-size:9px}
+ .side{grid-column:1/3;border-left:0;border-top:1px solid var(--line);height:36vh;min-height:190px}
+ .workspace{height:calc(64vh - 54px);min-height:220px}
+ .app{display:grid;grid-template-columns:56px 1fr;grid-template-rows:minmax(220px,1fr) 36vh}
+ .tools{grid-row:1}.workspace{grid-column:2;grid-row:1}.side{grid-column:1/3;grid-row:2}
+ .top{padding:0 8px}.top-actions button{font-size:11px;padding:7px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="brand">DANWANKA <b>PIXEL LAB</b></div>
+ <div class="top-actions">
+  <button id="undoBtn" title="Undo">↶</button><button id="redoBtn" title="Redo">↷</button>
+  <button id="saveProject" title="Save editable project">Save</button>
+  <button id="openProject" title="Open saved project">Open</button>
+  <button class="primary" id="exportBtn">PNG</button>
+ </div>
+</header>
+<main class="app">
+ <nav class="tools">
+  <button class="tool active" data-tool="select"><span>↖</span>Select</button>
+  <button class="tool" data-tool="text"><span>T</span>Text</button>
+  <button class="tool" data-tool="rect"><span>▭</span>Rectangle</button>
+  <button class="tool" data-tool="circle"><span>◯</span>Circle</button>
+  <button class="tool" data-tool="line"><span>╱</span>Line</button>
+  <button class="tool" id="imageTool"><span>▧</span>Image</button>
+  <button class="tool" data-tool="bg"><span>▩</span>Background</button>
+  <button class="tool" id="deleteTool"><span>⌫</span>Delete</button>
+  <input id="imageInput" type="file" accept="image/*" class="hidden">
+  <input id="projectInput" type="file" accept="application/json,.json" class="hidden">
+ </nav>
+ <section class="workspace">
+  <div class="workspacebar"><span id="canvasSize">1080 × 1080 px</span><span>•</span><span id="zoomLabel">Fit view</span></div>
+  <div class="stage-scroll" id="stageScroll"><div class="canvas-wrap"><canvas id="artboard" width="1080" height="1080"></canvas></div></div>
+  <div class="bottom"><span id="status">Ready</span><span>Private workspace • Saved on your device when exported</span></div>
+ </section>
+ <aside class="side">
+  <div class="panel-title">Properties</div>
+  <div id="emptyProps" class="hint">Select an object on the canvas or add a new text, shape or image. Drag objects to move them.</div>
+  <div id="props" class="hidden">
+   <div class="section">
+    <div class="field"><label>Object name</label><input id="objName" type="text"></div>
+    <div class="row">
+     <div class="field"><label>X position</label><input id="posX" type="number"></div>
+     <div class="field"><label>Y position</label><input id="posY" type="number"></div>
+    </div>
+    <div class="row">
+     <div class="field"><label>Width</label><input id="objW" type="number" min="1"></div>
+     <div class="field"><label>Height</label><input id="objH" type="number" min="1"></div>
+    </div>
+    <div class="field"><label>Rotation</label><input id="rotation" type="range" min="-180" max="180" value="0"><span id="rotationVal" class="hint">0°</span></div>
+    <div class="field"><label>Opacity</label><input id="opacity" type="range" min="0" max="100" value="100"></div>
+   </div>
+   <div class="section" id="textProps">
+    <div class="panel-title">Text style</div>
+    <div class="field"><label>Text content</label><input id="textValue" type="text"></div>
+    <div class="row">
+     <div class="field"><label>Font family</label><select id="fontFamily"><option>Arial</option><option>Impact</option><option>Georgia</option><option>Times New Roman</option><option>Verdana</option><option>Trebuchet MS</option><option>Courier New</option><option>serif</option><option>sans-serif</option></select></div>
+     <div class="field"><label>Font size</label><input id="fontSize" type="number" min="8" max="500"></div>
+    </div>
+    <div class="row">
+     <div class="field"><label>Text color</label><input id="fillColor" type="color" value="#ffffff"></div>
+     <div class="field"><label>Stroke color</label><input id="strokeColor" type="color" value="#000000"></div>
+    </div>
+    <div class="row">
+     <div class="field"><label>Stroke width</label><input id="strokeWidth" type="number" min="0" max="40"></div>
+     <div class="field"><label>Shadow</label><select id="shadow"><option value="0">Off</option><option value="4">Soft</option><option value="10">Strong</option><option value="18">Extra</option></select></div>
+    </div>
+    <div class="row">
+     <div class="field"><label>Gradient end</label><input id="gradientEnd" type="color" value="#ffb347"></div>
+     <div class="field"><label>Text fill</label><select id="textFillMode"><option value="solid">Solid</option><option value="gradient">Gradient</option></select></div>
+    </div>
+    <div class="field"><label>Letter spacing</label><input id="letterSpacing" type="range" min="-5" max="30" value="0"></div>
+    <div class="row">
+     <button id="boldBtn">Bold</button><button id="italicBtn">Italic</button><button id="alignBtn">Center</button>
+    </div>
+   </div>
+   <div class="section" id="imageProps">
+    <div class="panel-title">Image adjustments</div>
+    <div class="field"><label>Brightness</label><input id="imgBrightness" type="range" min="0" max="200" value="100"></div>
+    <div class="field"><label>Contrast</label><input id="imgContrast" type="range" min="0" max="200" value="100"></div>
+    <div class="field"><label>Saturation</label><input id="imgSaturation" type="range" min="0" max="200" value="100"></div>
+    <div class="field"><label>Grayscale</label><input id="imgGray" type="range" min="0" max="100" value="0"></div>
+    <div class="btnrow"><button id="flipH">Flip horizontal</button><button id="flipV">Flip vertical</button></div>
+   </div>
+   <div class="section" id="shapeProps">
+    <div class="panel-title">Fill & outline</div>
+    <div class="row">
+     <div class="field"><label>Fill color</label><input id="shapeFill" type="color" value="#ff7900"></div>
+     <div class="field"><label>Outline</label><input id="shapeStroke" type="color" value="#ffffff"></div>
+    </div>
+    <div class="field"><label>Outline width</label><input id="shapeStrokeWidth" type="number" min="0" max="40" value="0"></div>
+   </div>
+   <div class="btnrow">
+    <button id="frontBtn">Bring forward</button><button id="backBtn">Send backward</button>
+    <button id="duplicateBtn">Duplicate</button><button id="deleteBtn">Delete</button>
+   </div>
+  </div>
+  <div class="section" style="margin-top:18px">
+   <div class="panel-title">Layers</div>
+   <div id="layers" class="layer-list"></div>
+  </div>
+  <div class="section">
+   <div class="panel-title">Canvas settings</div>
+   <div class="row"><div class="field"><label>Width px</label><input id="canvasW" type="number" value="1080" min="100" max="4000"></div><div class="field"><label>Height px</label><input id="canvasH" type="number" value="1080" min="100" max="4000"></div></div>
+   <button id="resizeCanvas" class="primary" style="width:100%">Apply canvas size</button>
+   <div class="btnrow"><button id="exportJpg">Export JPG</button><button id="exportPng2">Export PNG</button></div>
+   <div class="field"><label>Canvas background</label><div class="row"><input id="canvasBg" type="color" value="#ffffff"><button id="transparentBg">Transparent</button></div></div>
+  </div>
+  <div class="hint">Tip: For transparent PNG, set canvas background to Transparent before exporting. On iPhone, use Safari → Share → Add to Home Screen to keep DANWANKA PIXEL LAB on your Home Screen. Project files stay on this device unless you choose to share them.</div>
+ </aside>
+</main>
+<script>
+(()=> {
+const canvas=document.getElementById('artboard'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let objects=[],selected=null,tool='select',drag=null,history=[],future=[],canvasBg='#ffffff',transparent=false;
+const clone=x=>JSON.parse(JSON.stringify(x));
+function snapshot(){history.push(JSON.stringify({objects,canvasBg,transparent,w:canvas.width,h:canvas.height}));if(history.length>40)history.shift();future=[]}
+function restore(s){let d=JSON.parse(s);objects=d.objects;canvasBg=d.canvasBg;transparent=d.transparent;canvas.width=d.w;canvas.height=d.h;selected=null;draw();refresh()}
+function undo(){if(!history.length)return;future.push(JSON.stringify({objects,canvasBg,transparent,w:canvas.width,h:canvas.height}));restore(history.pop())}
+function redo(){if(!future.length)return;history.push(JSON.stringify({objects,canvasBg,transparent,w:canvas.width,h:canvas.height}));restore(future.pop())}
+function add(o){snapshot();objects.push(o);selected=o.id;draw();refresh()}
+function uid(){return 'obj_'+Date.now()+'_'+Math.floor(Math.random()*9999)}
+function selectedObj(){return objects.find(o=>o.id===selected)}
+function defaults(type,x=canvas.width/2,y=canvas.height/2){return {id:uid(),type,name:type[0].toUpperCase()+type.slice(1),x,y,w:type==='text'?420:260,h:type==='text'?100:180,rotation:0,opacity:1,fill:'#ff7900',stroke:'#ffffff',strokeWidth:0,text:'Your Text',font:'Arial',fontSize:90,bold:true,italic:false,align:'center',shadow:0,gradientEnd:'#ffb347',fillMode:'solid',letterSpacing:0,brightness:100,contrast:100,saturation:100,grayscale:0,flipH:false,flipV:false,src:null}}
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(!transparent){ctx.fillStyle=canvasBg;ctx.fillRect(0,0,canvas.width,canvas.height)}
+ for(const o of objects){ctx.save();ctx.globalAlpha=o.opacity??1;ctx.translate(o.x,o.y);ctx.rotate((o.rotation||0)*Math.PI/180);
+ if(o.type==='text'){ctx.font=`${o.italic?'italic ':''}${o.bold?'bold ':''}${o.fontSize}px "${o.font}"`;ctx.textAlign=o.align||'center';ctx.textBaseline='middle';ctx.lineJoin='round';if(o.shadow){ctx.shadowColor='#000';ctx.shadowBlur=o.shadow;ctx.shadowOffsetX=o.shadow/3;ctx.shadowOffsetY=o.shadow/3}if(o.strokeWidth>0){ctx.strokeStyle=o.stroke;ctx.lineWidth=o.strokeWidth;ctx.strokeText(o.text||'',0,0)}
+ let textFill=o.fill;
+ if(o.fillMode==='gradient'){let grad=ctx.createLinearGradient(-o.w/2,0,o.w/2,0);grad.addColorStop(0,o.fill);grad.addColorStop(1,o.gradientEnd||'#ffb347');textFill=grad}
+ ctx.fillStyle=textFill;
+ if(o.letterSpacing){let chars=[...(o.text||'')],widths=chars.map(ch=>ctx.measureText(ch).width),total=widths.reduce((a,b)=>a+b,0)+o.letterSpacing*(chars.length-1);let x=o.align==='left'?-o.w/2:o.align==='right'?o.w/2-total:-total/2;for(let i=0;i<chars.length;i++){ctx.fillText(chars[i],x,0);x+=widths[i]+o.letterSpacing}}
+ else ctx.fillText(o.text||'',0,0)}
+ else if(o.type==='rect'||o.type==='circle'||o.type==='line'){ctx.fillStyle=o.fill;ctx.strokeStyle=o.stroke;ctx.lineWidth=o.strokeWidth||0;if(o.type==='rect'){ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h);if(o.strokeWidth)ctx.strokeRect(-o.w/2,-o.h/2,o.w,o.h)}if(o.type==='circle'){ctx.beginPath();ctx.ellipse(0,0,o.w/2,o.h/2,0,0,Math.PI*2);ctx.fill();if(o.strokeWidth)ctx.stroke()}if(o.type==='line'){ctx.beginPath();ctx.moveTo(-o.w/2,0);ctx.lineTo(o.w/2,0);ctx.strokeStyle=o.strokeWidth?o.stroke:o.fill;ctx.lineWidth=o.strokeWidth||8;ctx.stroke()}}
+ else if(o.type==='image'&&o.src){let im=imageCache[o.id];if(im&&im.complete){ctx.filter=`brightness(${o.brightness??100}%) contrast(${o.contrast??100}%) saturate(${o.saturation??100}%) grayscale(${o.grayscale??0}%)`;ctx.scale(o.flipH?-1:1,o.flipV?-1:1);ctx.drawImage(im,-o.w/2,-o.h/2,o.w,o.h);ctx.filter='none'}}
+ ctx.restore();
+ }
+ if(selectedObj()){let o=selectedObj();ctx.save();ctx.translate(o.x,o.y);ctx.rotate((o.rotation||0)*Math.PI/180);ctx.strokeStyle='#ff8a00';ctx.lineWidth=Math.max(2,canvas.width/600);ctx.setLineDash([10,7]);ctx.strokeRect(-o.w/2-5,-o.h/2-5,o.w+10,o.h+10);ctx.setLineDash([]);ctx.fillStyle='#ff8a00';ctx.fillRect(o.w/2-7,o.h/2-7,14,14);ctx.restore()}
+ $('canvasSize').textContent=`${canvas.width} × ${canvas.height} px`;
+}
+const imageCache={};
+function refresh(){
+ $('layers').innerHTML='';
+ [...objects].reverse().forEach(o=>{let d=document.createElement('div');d.className='layer'+(o.id===selected?' selected':'');d.innerHTML=`<span>${o.type==='text'?'T':o.type==='image'?'▧':o.type==='circle'?'◯':'▭'}</span><span class="lname"></span>`;d.querySelector('.lname').textContent=o.name||o.type;d.onclick=()=>{selected=o.id;draw();refresh()};$('layers').appendChild(d)});
+ const o=selectedObj();$('emptyProps').classList.toggle('hidden',!!o);$('props').classList.toggle('hidden',!o);
+ if(!o)return;
+ $('objName').value=o.name||'';$('posX').value=Math.round(o.x);$('posY').value=Math.round(o.y);$('objW').value=Math.round(o.w);$('objH').value=Math.round(o.h);$('rotation').value=o.rotation||0;$('rotationVal').textContent=(o.rotation||0)+'°';$('opacity').value=Math.round((o.opacity??1)*100);
+ $('textProps').classList.toggle('hidden',o.type!=='text');$('shapeProps').classList.toggle('hidden',!['rect','circle','line'].includes(o.type));$('imageProps').classList.toggle('hidden',o.type!=='image');
+ if(o.type==='text'){$('textValue').value=o.text;$('fontFamily').value=o.font;$('fontSize').value=o.fontSize;$('fillColor').value=o.fill;$('strokeColor').value=o.stroke;$('strokeWidth').value=o.strokeWidth;$('shadow').value=o.shadow||0;$('gradientEnd').value=o.gradientEnd||'#ffb347';$('textFillMode').value=o.fillMode||'solid';$('letterSpacing').value=o.letterSpacing||0;$('boldBtn').style.background=o.bold?'#8c480b':'';$('italicBtn').style.background=o.italic?'#8c480b':'';$('alignBtn').textContent=o.align==='center'?'Center':o.align==='left'?'Left':'Right'}
+ if(['rect','circle','line'].includes(o.type)){$('shapeFill').value=o.fill;$('shapeStroke').value=o.stroke;$('shapeStrokeWidth').value=o.strokeWidth}
+ if(o.type==='image'){$('imgBrightness').value=o.brightness??100;$('imgContrast').value=o.contrast??100;$('imgSaturation').value=o.saturation??100;$('imgGray').value=o.grayscale??0}
+}
+function update(fn){let o=selectedObj();if(!o)return;snapshot();fn(o);draw();refresh()}
+function setTool(t){tool=t;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));$('status').textContent='Tool: '+t}
+document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>{let t=b.dataset.tool;setTool(t);if(t==='text'){let o=defaults('text');add(o);$('textValue').focus();$('textValue').select()}else if(['rect','circle','line'].includes(t)){let o=defaults(t);if(t==='line'){o.w=300;o.h=12;o.stroke='#222';o.strokeWidth=8}add(o)}else if(t==='bg'){$('canvasBg').click()}});
+$('imageTool').onclick=()=>$('imageInput').click();
+$('imageInput').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let scale=Math.min(500/im.width,500/im.height,1);let o=defaults('image');o.name=f.name;o.src=r.result;o.w=im.width*scale;o.h=im.height*scale;imageCache[o.id]=im;add(o)};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
+$('deleteTool').onclick=del;$('deleteBtn').onclick=del;function del(){if(!selected)return;snapshot();objects=objects.filter(o=>o.id!==selected);selected=null;draw();refresh()}
+$('duplicateBtn').onclick=()=>{let o=selectedObj();if(!o)return;let c=clone(o);c.id=uid();c.name=(o.name||o.type)+' copy';c.x+=30;c.y+=30;if(c.type==='image'){let im=new Image();im.src=c.src;imageCache[c.id]=im}add(c)};
+$('frontBtn').onclick=()=>moveLayer(1);$('backBtn').onclick=()=>moveLayer(-1);function moveLayer(n){let i=objects.findIndex(o=>o.id===selected);if(i<0)return;let j=Math.max(0,Math.min(objects.length-1,i+n));if(i===j)return;snapshot();[objects[i],objects[j]]=[objects[j],objects[i]];draw();refresh()}
+function bind(id,fn){$(id).addEventListener('change',()=>update(fn))}
+bind('objName', (o)=>o.name=$('objName').value);bind('posX',o=>o.x=+$('posX').value);bind('posY',o=>o.y=+$('posY').value);bind('objW',o=>o.w=Math.max(1,+$('objW').value));bind('objH',o=>o.h=Math.max(1,+$('objH').value));bind('rotation',o=>o.rotation=+$('rotation').value);bind('opacity',o=>o.opacity=+$('opacity').value/100);
+bind('textValue',o=>o.text=$('textValue').value);bind('fontFamily',o=>o.font=$('fontFamily').value);bind('fontSize',o=>o.fontSize=Math.max(8,+$('fontSize').value));bind('fillColor',o=>o.fill=$('fillColor').value);bind('strokeColor',o=>o.stroke=$('strokeColor').value);bind('strokeWidth',o=>o.strokeWidth=+$('strokeWidth').value);bind('shadow',o=>o.shadow=+$('shadow').value);
+bind('shapeFill',o=>o.fill=$('shapeFill').value);bind('shapeStroke',o=>o.stroke=$('shapeStroke').value);bind('shapeStrokeWidth',o=>o.strokeWidth=+$('shapeStrokeWidth').value);
+$('boldBtn').onclick=()=>update(o=>o.bold=!o.bold);$('italicBtn').onclick=()=>update(o=>o.italic=!o.italic);$('alignBtn').onclick=()=>update(o=>o.align=o.align==='center'?'left':o.align==='left'?'right':'center');
+$('canvasBg').onchange=e=>{snapshot();canvasBg=e.target.value;transparent=false;draw()};$('transparentBg').onclick=()=>{snapshot();transparent=true;draw()};
+$('resizeCanvas').onclick=()=>{let w=Math.max(100,Math.min(4000,+$('canvasW').value)),h=Math.max(100,Math.min(4000,+$('canvasH').value));snapshot();canvas.width=w;canvas.height=h;draw()};
+function point(e){let r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}}
+function hit(o,p){let dx=p.x-o.x,dy=p.y-o.y,a=-(o.rotation||0)*Math.PI/180;let x=dx*Math.cos(a)-dy*Math.sin(a),y=dx*Math.sin(a)+dy*Math.cos(a);return Math.abs(x)<=o.w/2+8&&Math.abs(y)<=o.h/2+8}
+canvas.addEventListener('pointerdown',e=>{let p=point(e);if(tool==='select'){let o=[...objects].reverse().find(o=>hit(o,p));selected=o?.id||null;if(o){snapshot();drag={id:o.id,dx:p.x-o.x,dy:p.y-o.y};canvas.setPointerCapture(e.pointerId)}draw();refresh()}});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;let p=point(e),o=selectedObj();if(!o)return;o.x=p.x-drag.dx;o.y=p.y-drag.dy;draw()});
+canvas.addEventListener('pointerup',()=>{if(drag){drag=null;refresh()}});
+function download(blob,name){let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('exportBtn').onclick=()=>{selected=null;draw();canvas.toBlob(b=>{if(b)download(b,'danwanka-pixel-lab.png')},'image/png');refresh()};
+function exportAs(type,filename){selected=null;draw();canvas.toBlob(b=>{if(b)download(b,filename)},type,type==='image/jpeg'?0.92:undefined);refresh()}
+$('exportJpg').onclick=()=>exportAs('image/jpeg','danwanka-pixel-lab.jpg');
+$('exportPng2').onclick=()=>exportAs('image/png','danwanka-pixel-lab.png');
+$('saveProject').onclick=()=>{let data={app:'DANWANKA PIXEL LAB',version:1,objects,canvasBg,transparent,width:canvas.width,height:canvas.height};download(new Blob([JSON.stringify(data)],{type:'application/json'}),'danwanka-project.json')};
+$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;
+$('projectInput').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);snapshot();objects=d.objects||[];canvasBg=d.canvasBg||'#fff';transparent=!!d.transparent;canvas.width=d.width||1080;canvas.height=d.height||1080;objects.filter(o=>o.type==='image').forEach(o=>{let im=new Image();im.src=o.src;imageCache[o.id]=im});selected=null;draw();refresh()}catch(err){alert('Could not open this project file.')}};r.readAsText(f);e.target.value=''};
+$('openProject').onclick=()=>$('projectInput').click();
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}if(e.key==='Delete'||e.key==='Backspace'){if(document.activeElement.tagName!=='INPUT')del()}});
+draw();refresh();
+})();
+</script>
+</body>
+</html>
